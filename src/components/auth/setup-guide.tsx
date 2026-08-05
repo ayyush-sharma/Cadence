@@ -73,7 +73,21 @@ export function SetupGuide() {
           </Step>
         </ol>
 
-        <p className="mt-6 border-t border-border pt-4 text-xs text-muted-foreground">
+        {/* Seeing this screen on a deployed Worker almost always means the
+            variables were added as runtime values instead of build values, so
+            the fix is called out here rather than only in the README. */}
+        <div className="mt-6 rounded-lg border border-accent/35 bg-accent-soft px-3 py-2.5 text-xs">
+          <p className="font-medium text-accent">Deployed on Cloudflare?</p>
+          <p className="mt-1 leading-relaxed text-muted-foreground">
+            These values must be set under{" "}
+            <strong>Settings → Build → Variables and secrets</strong> — not the
+            runtime <em>Variables and Secrets</em> panel. Next bakes them into
+            the bundle at build time, so a runtime variable is applied too late
+            to have any effect. Add them there, then retry the deployment.
+          </p>
+        </div>
+
+        <p className="mt-4 border-t border-border pt-4 text-xs text-muted-foreground">
           Full instructions are in the project README.
         </p>
       </div>

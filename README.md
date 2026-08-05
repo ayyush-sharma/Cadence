@@ -127,10 +127,21 @@ Create → Workers → Import a repository**. Then set:
 
 Two more things to get right:
 
-1. **Environment variables.** Add all six `NEXT_PUBLIC_FIREBASE_*` values under
-   **your project → Settings → Variables and Secrets**. They are needed *at
-   build time* — Next inlines them into the client bundle, so a deploy without
-   them builds fine but produces an app stuck on the setup screen.
+1. **Environment variables — in the *build* section, not the runtime one.**
+   Add all six `NEXT_PUBLIC_FIREBASE_*` values under
+   **your Worker → Settings → Build → Variables and secrets**.
+
+   Cloudflare offers two separate places for variables, and the obvious one is
+   the wrong one here. The top-level *Variables and Secrets* panel is described
+   as "used at runtime" — but Next inlines `NEXT_PUBLIC_*` values into the
+   JavaScript bundle during `next build`. By the time the Worker runs, the
+   compiled code already contains empty strings, so a runtime variable can
+   never take effect.
+
+   The symptom is a deploy that builds cleanly but always shows the setup
+   screen, seemingly "losing" the variables on every commit. Nothing is being
+   lost: each push just rebuilds without them. Put them in the **Build**
+   section and retry the deployment so a fresh build picks them up.
 2. **Authorised domains.** Add your `*.workers.dev` hostname (and any custom
    domain) under **Firebase → Authentication → Settings → Authorized domains**,
    or Google sign-in will be rejected.
