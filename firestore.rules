@@ -1,0 +1,63 @@
+rules_version = '2';
+
+/**
+ * Cadence security rules.
+ *
+ * The model is deliberately simple: every document lives under
+ * `users/{uid}/…`, and only that signed-in user may read or write it. There is
+ * no sharing, so there is no case where one account should ever see another's
+ * data.
+ *
+ * Publish with:
+ *   firebase deploy --only firestore:rules
+ * or paste into Firebase console → Firestore Database → Rules.
+ *
+ * Note: the Firebase web API key in `.env.local` is not a secret — it only
+ * identifies the project. These rules are what actually protect the data.
+ */
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isOwner(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+
+    // Validates a block in the weekly template.
+    function validBlock(data) {
+      return data.title is string
+        && data.title.size() > 0
+        && data.title.size() <= 80
+        && data.category is string
+        && data.days is list
+        && data.days.size() <= 7
+        && data.startMinutes is number
+        && data.endMinutes is number
+        && data.startMinutes >= 0
+        && data.endMinutes <= 1440
+        && data.startMinutes < data.endMinutes;
+    }
+
+    // Validates a materialised day record.
+    function validDay(data) {
+      return data.completed is list
+        && (!('note' in data) || (data.note is string && data.note.size() <= 500))
+        && (!('scheduled' in data) || data.scheduled is list);
+    }
+
+    match /users/{uid} {
+      allow read, write: if isOwner(uid);
+
+      match /blocks/{blockId} {
+        allow read, delete: if isOwner(uid);
+        allow create, update: if isOwner(uid) && validBlock(request.resource.data);
+      }
+
+      match /days/{dateKey} {
+        allow read, delete: if isOwner(uid);
+        allow create, update: if isOwner(uid) && validDay(request.resource.data);
+      }
+    }
+
+    // Anything not matched above is denied by default.
+  }
+}

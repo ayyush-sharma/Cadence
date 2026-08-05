@@ -1,26 +1,225 @@
 @import "tailwindcss";
 
+/*
+ * Cadence design tokens.
+ *
+ * Colours are authored in OKLCH for perceptually even steps: shifting only the
+ * lightness channel keeps hue and saturation stable, which is what makes the
+ * dark theme feel like the same palette rather than an inverted one.
+ *
+ * The surface ramp is a warm near-neutral (hue ~70) instead of pure grey, and
+ * the accent is amber. Together they read calm and paper-like rather than like
+ * the default blue-on-white SaaS look.
+ */
+
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: oklch(0.99 0.004 85);
+  --foreground: oklch(0.22 0.012 65);
+
+  --surface: oklch(1 0 0);
+  --surface-muted: oklch(0.972 0.005 85);
+  --surface-raised: oklch(1 0 0);
+
+  --border: oklch(0.915 0.006 80);
+  --border-strong: oklch(0.86 0.008 80);
+
+  --muted-foreground: oklch(0.545 0.014 70);
+  --subtle-foreground: oklch(0.66 0.012 75);
+
+  --accent: oklch(0.72 0.155 62);
+  --accent-hover: oklch(0.67 0.16 60);
+  --accent-foreground: oklch(0.99 0.005 85);
+  --accent-soft: oklch(0.955 0.035 75);
+
+  --success: oklch(0.63 0.14 155);
+  --success-soft: oklch(0.95 0.04 155);
+
+  --danger: oklch(0.6 0.19 25);
+  --danger-soft: oklch(0.96 0.03 25);
+
+  --ring: oklch(0.72 0.155 62 / 0.45);
+
+  --radius: 0.75rem;
+
+  /* Shadows stay tinted with the surface hue so cards don't look grey-dirty. */
+  --shadow-soft: 0 1px 2px oklch(0.3 0.02 70 / 0.05),
+    0 4px 16px oklch(0.3 0.02 70 / 0.05);
+  --shadow-lift: 0 2px 4px oklch(0.3 0.02 70 / 0.06),
+    0 12px 32px oklch(0.3 0.02 70 / 0.09);
+}
+
+.dark {
+  --background: oklch(0.165 0.008 70);
+  --foreground: oklch(0.94 0.006 85);
+
+  --surface: oklch(0.205 0.009 70);
+  --surface-muted: oklch(0.185 0.008 70);
+  --surface-raised: oklch(0.235 0.01 70);
+
+  --border: oklch(0.28 0.01 70);
+  --border-strong: oklch(0.35 0.012 70);
+
+  --muted-foreground: oklch(0.68 0.012 75);
+  --subtle-foreground: oklch(0.55 0.012 75);
+
+  --accent: oklch(0.76 0.15 65);
+  --accent-hover: oklch(0.81 0.14 68);
+  --accent-foreground: oklch(0.19 0.02 65);
+  --accent-soft: oklch(0.3 0.05 65);
+
+  --success: oklch(0.72 0.15 158);
+  --success-soft: oklch(0.29 0.05 158);
+
+  --danger: oklch(0.68 0.17 25);
+  --danger-soft: oklch(0.3 0.06 25);
+
+  --ring: oklch(0.76 0.15 65 / 0.5);
+
+  --shadow-soft: 0 1px 2px oklch(0 0 0 / 0.3), 0 4px 16px oklch(0 0 0 / 0.28);
+  --shadow-lift: 0 2px 4px oklch(0 0 0 / 0.34), 0 12px 32px oklch(0 0 0 / 0.42);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-surface-raised: var(--surface-raised);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-subtle-foreground: var(--subtle-foreground);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent-soft: var(--accent-soft);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-ring: var(--ring);
+
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 0.25rem);
+  --radius-2xl: calc(var(--radius) + 0.5rem);
+
+  --shadow-soft: var(--shadow-soft);
+  --shadow-lift: var(--shadow-lift);
+
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    /* Tabular numerals keep clock times and streak counts from jittering. */
+    font-variant-numeric: tabular-nums;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  /* Respect users who ask the OS to reduce motion: the reward animations are
+     decorative, so we collapse them rather than merely shortening them. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer base {
+  /*
+   * Category colours.
+   *
+   * Components publish `--block-color-light` / `--block-color-dark` inline
+   * (values come from `CATEGORIES` in constants.ts) and read back the resolved
+   * `--block-color`. This keeps the theme switch in CSS, so no component needs
+   * to know which theme is active.
+   */
+  [style*="--block-color-light"] {
+    --block-color: var(--block-color-light);
+  }
+
+  .dark [style*="--block-color-light"] {
+    --block-color: var(--block-color-dark);
+  }
+}
+
+@layer utilities {
+  /* Radix open/close transitions.
+     Defined here rather than pulling in `tailwindcss-animate`, which targets
+     Tailwind v3 and would add a dependency for four keyframes. */
+  @keyframes cadence-fade-in {
+    from {
+      opacity: 0;
+    }
+  }
+  @keyframes cadence-fade-out {
+    to {
+      opacity: 0;
+    }
+  }
+  @keyframes cadence-zoom-in {
+    from {
+      opacity: 0;
+      transform: translate(-50%, -50%) scale(0.96);
+    }
+  }
+  @keyframes cadence-zoom-out {
+    to {
+      opacity: 0;
+      transform: translate(-50%, -50%) scale(0.96);
+    }
+  }
+
+  .animate-overlay-in {
+    animation: cadence-fade-in 160ms ease-out;
+  }
+  .animate-overlay-out {
+    animation: cadence-fade-out 140ms ease-in forwards;
+  }
+  .animate-panel-in {
+    animation: cadence-zoom-in 180ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .animate-panel-out {
+    animation: cadence-zoom-out 140ms ease-in forwards;
+  }
+
+  /* Subtle grid backdrop used behind the sign-in screen. */
+  .bg-grid {
+    background-image: linear-gradient(
+        to right,
+        var(--border) 1px,
+        transparent 1px
+      ),
+      linear-gradient(to bottom, var(--border) 1px, transparent 1px);
+    background-size: 3rem 3rem;
+  }
+
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-strong) transparent;
+  }
 }

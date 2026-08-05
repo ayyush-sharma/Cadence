@@ -1,36 +1,212 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+<div align="center">
 
-## Getting Started
+# Cadence
 
-First, run the development server:
+**Plan the week. Own the day.**
+
+A calm, rewarding timetable tracker. Build a weekly rhythm once, tick off your
+day as you go, and watch the streak grow.
+
+</div>
+
+---
+
+## What it does
+
+You define the blocks that repeat each week — *Study Java, Mon–Fri 09:00–11:00*;
+*Company work, 13:00–18:00* — and Cadence materialises every day from that
+template. Open it in the morning, tick things off as you finish them, and get an
+honest picture of where your time actually went at the end of the week.
+
+- **Weekly template, daily instances.** Set the rhythm once. Editing next week's
+  plan never rewrites what last week actually looked like.
+- **A check-off worth doing.** Confetti from the checkbox you tapped, a haptic
+  tick on mobile, a progress ring that sweeps to full, and a bigger celebration
+  when the whole day is done.
+- **Streaks.** A day counts once you clear 60% of it, so one skipped block
+  doesn't erase a good day. An unfinished today never breaks a streak — only a
+  finished, failed yesterday does.
+- **Weekly and monthly insights.** Completion trend, where your hours went by
+  category, and a six-month consistency heatmap.
+- **Real dark mode.** Not an inverted light theme — a separately tuned palette,
+  including the chart colours.
+- **Yours.** Your data lives in your own Firebase project. No third-party
+  analytics, no tracking, no account on someone else's server.
+
+## Tech
+
+| | |
+|---|---|
+| Framework | Next.js 16 (App Router, React 19) |
+| Language | TypeScript, strict |
+| Styling | Tailwind CSS v4, OKLCH design tokens |
+| Components | Radix UI primitives, styled in-repo (shadcn/ui approach) |
+| Charts | Recharts |
+| Motion | Motion, canvas-confetti |
+| Backend | Firebase Auth + Firestore |
+| Hosting | Cloudflare Workers via OpenNext |
+
+## Quick start
+
+**Prerequisites:** Node.js 20+ and a Google account.
+
+```bash
+git clone https://github.com/your-username/cadence.git
+cd cadence
+npm install
+```
+
+### 1. Create a Firebase project
+
+1. Go to the [Firebase console](https://console.firebase.google.com) and create
+   a project.
+2. Add a **Web app** to it (the `</>` icon). Copy the config values it shows you.
+3. **Build → Authentication → Get started.** Enable **Email/Password** and
+   **Google**.
+4. **Build → Firestore Database → Create database.** Start in production mode;
+   the rules are replaced in the next step.
+
+### 2. Publish the security rules
+
+The rules in [`firestore.rules`](firestore.rules) scope every document to its
+owner. Paste them into **Firestore Database → Rules → Publish**, or run:
+
+```bash
+npx firebase deploy --only firestore:rules
+```
+
+> Without this step your database is either fully locked or fully open. Don't
+> skip it.
+
+### 3. Add your credentials
+
+```bash
+cp .env.example .env.local
+```
+
+Fill in the six values from step 1. Then:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open <http://localhost:3000>. If anything is missing, the app shows a setup
+checklist rather than an error.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Deploying to Cloudflare
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Cadence runs on Cloudflare Workers through
+[OpenNext](https://opennext.js.org/cloudflare).
 
-## Learn More
+```bash
+npm run cf:preview   # build and run the real Worker locally
+npm run cf:deploy    # build and ship it
+```
 
-To learn more about Next.js, take a look at the following resources:
+Two things to get right:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. **Environment variables.** Add all six `NEXT_PUBLIC_FIREBASE_*` values under
+   **Workers & Pages → your project → Settings → Variables and Secrets**. They
+   are needed *at build time* — Next inlines them into the client bundle, so a
+   deploy without them produces an app stuck on the setup screen.
+2. **Authorised domains.** Add your `*.workers.dev` hostname (and any custom
+   domain) under **Firebase → Authentication → Settings → Authorized domains**,
+   or Google sign-in will be rejected.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Why the app is client-rendered
 
-## Deploy on Vercel
+Every page sits behind a client-only boundary
+([`src/components/layout/client-page.tsx`](src/components/layout/client-page.tsx)).
+This is deliberate and load-bearing: Firestore's Node build depends on
+`@grpc/grpc-js`, which calls `new Function()` — something Cloudflare Workers
+forbid. Keeping the Firebase SDK out of the server bundle avoids a
+`Code generation from strings disallowed` error that appears **only at request
+time**, not during the build. Nothing is lost, since every page renders
+per-user data behind authentication.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Scripts
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| Command | What it does |
+|---|---|
+| `npm run dev` | Dev server |
+| `npm run build` | Production build |
+| `npm run lint` | ESLint |
+| `npm run typecheck` | `tsc --noEmit` |
+| `npm run cf:preview` | Build and run the Worker locally |
+| `npm run cf:deploy` | Build and deploy to Cloudflare |
+
+## Project layout
+
+```
+src/
+├── app/                    # Routes — thin; each renders one client page
+├── components/
+│   ├── auth/               # Sign-in screen, setup guide
+│   ├── insights/           # Dashboard, charts, heatmap
+│   ├── layout/             # App shell, nav, client boundary
+│   ├── providers/          # Auth and theme context
+│   ├── schedule/           # Weekly editor, block dialog, week grid
+│   ├── today/              # Daily view and check-off
+│   └── ui/                 # Reusable primitives
+├── hooks/                  # Data hooks (blocks, day, insights, streak)
+└── lib/
+    ├── constants.ts        # ← every tunable value lives here
+    ├── db.ts               # Firestore access layer
+    ├── firebase.ts         # Lazy, browser-only SDK bootstrap
+    ├── schedule.ts         # Pure scheduling + stats logic
+    ├── time.ts             # Time and date helpers
+    └── types.ts            # Domain types
+```
+
+Two conventions worth knowing before contributing:
+
+- **`src/lib/constants.ts` is the single source of truth.** Colours, category
+  definitions, streak thresholds, confetti parameters, grid hours, storage keys.
+  If a value might reasonably be changed, it belongs there — not inline.
+- **`schedule.ts` and `time.ts` are pure.** No React, no Firebase. They hold the
+  logic that's worth reasoning about on its own.
+
+### Data model
+
+```
+users/{uid}
+├── blocks/{blockId}     # recurring weekly template
+└── days/{YYYY-MM-DD}    # what actually happened that day
+```
+
+Times are stored as **minutes from local midnight** (`540` = 09:00), not
+timestamps — a 09:00 block should still read 09:00 if you travel. Day documents
+keep a snapshot of what was scheduled, so editing the template never rewrites
+history.
+
+## Accessibility
+
+The six category colours are verified with a palette validator and pass checks
+for lightness banding, chroma, colour-blind separation (protan/deutan/tritan),
+and contrast — tuned separately per theme, since the safe lightness range
+differs between light and dark surfaces. Colour is never the only signal: every
+block and chart segment carries a text label. Reward animations respect
+`prefers-reduced-motion`.
+
+If you change the values in `CATEGORIES`, re-run a palette validation before
+committing.
+
+## Known issues
+
+`npm audit` reports advisories in `undici`, reached through
+`wrangler → miniflare`. These are **development and deploy tooling only** — none
+of it ships in the application bundle. `npm audit fix --force` would downgrade
+Wrangler to an older major version, which is worse; the advisories clear when
+Wrangler updates its dependency upstream.
+
+## Contributing
+
+Issues and pull requests are welcome. Before opening a PR:
+
+```bash
+npm run lint && npm run typecheck && npm run build
+```
+
+## Licence
+
+[MIT](LICENSE)
