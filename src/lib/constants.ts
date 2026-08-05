@@ -16,7 +16,7 @@ export const APP = {
   tagline: "Plan the week. Own the day.",
   description:
     "A calm, rewarding timetable tracker. Build a weekly rhythm, tick off your day, and watch the streak grow.",
-  repository: "https://github.com/your-username/cadence",
+  repository: "https://github.com/ayyush-sharma/Cadence",
 } as const;
 
 /* -------------------------------------------------------------------------- */

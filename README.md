@@ -51,8 +51,8 @@ honest picture of where your time actually went at the end of the week.
 **Prerequisites:** Node.js 20+ and a Google account.
 
 ```bash
-git clone https://github.com/your-username/cadence.git
-cd cadence
+git clone https://github.com/ayyush-sharma/Cadence.git
+cd Cadence
 npm install
 ```
 
