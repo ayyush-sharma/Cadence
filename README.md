@@ -103,12 +103,34 @@ npm run cf:preview   # build and run the real Worker locally
 npm run cf:deploy    # build and ship it
 ```
 
-Two things to get right:
+### Connecting the GitHub repo to Cloudflare
+
+Create the project as a **Worker**, not a Pages site: **Workers & Pages →
+Create → Workers → Import a repository**. Then set:
+
+| Setting | Value |
+|---|---|
+| Build command | `npx opennextjs-cloudflare build` |
+| Deploy command | `npx opennextjs-cloudflare deploy` |
+| Build output directory | *(leave empty)* |
+
+> **Do not use `@cloudflare/next-on-pages`.** Cloudflare's dashboard may
+> auto-detect Next.js and suggest it, but that is a different, legacy adapter.
+> This project uses OpenNext (`wrangler.jsonc` + `open-next.config.ts`), and
+> mixing the two fails during install with an `ERESOLVE` peer-dependency
+> conflict between `wrangler` and `@cloudflare/workers-types`.
+>
+> A related symptom is the build log saying a Wrangler config file was found
+> but *"does not appear to be valid… make sure it contains the
+> `pages_build_output_dir` property"*. That means the project was created as
+> **Pages**; recreate it as a **Worker**.
+
+Two more things to get right:
 
 1. **Environment variables.** Add all six `NEXT_PUBLIC_FIREBASE_*` values under
-   **Workers & Pages → your project → Settings → Variables and Secrets**. They
-   are needed *at build time* — Next inlines them into the client bundle, so a
-   deploy without them produces an app stuck on the setup screen.
+   **your project → Settings → Variables and Secrets**. They are needed *at
+   build time* — Next inlines them into the client bundle, so a deploy without
+   them builds fine but produces an app stuck on the setup screen.
 2. **Authorised domains.** Add your `*.workers.dev` hostname (and any custom
    domain) under **Firebase → Authentication → Settings → Authorized domains**,
    or Google sign-in will be rejected.
