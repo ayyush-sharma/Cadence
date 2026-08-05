@@ -49,19 +49,26 @@ export function Button({
   children,
   ...props
 }: ButtonProps) {
-  const Comp = asChild ? Slot : "button";
+  const classes = cn(buttonVariants({ variant, size }), className);
+
+  // `Slot` requires exactly one React element child — it merges props onto that
+  // element rather than rendering a wrapper. Passing `children` through
+  // untouched is therefore mandatory: even a `null` sibling from a conditional
+  // counts as a second child and throws "Slot failed to slot onto its
+  // children". The caller's own element supplies any icon it needs.
+  if (asChild) {
+    return (
+      <Slot className={classes} {...props}>
+        {children}
+      </Slot>
+    );
+  }
 
   return (
-    <Comp
-      className={cn(buttonVariants({ variant, size }), className)}
-      disabled={disabled || loading}
-      {...props}
-    >
-      {/* `asChild` forwards a single child, so the spinner is only rendered
-          in the plain-button case where an extra element is safe. */}
-      {loading && !asChild ? <Loader2 className="animate-spin" /> : null}
+    <button className={classes} disabled={disabled || loading} {...props}>
+      {loading ? <Loader2 className="animate-spin" /> : null}
       {children}
-    </Comp>
+    </button>
   );
 }
 
